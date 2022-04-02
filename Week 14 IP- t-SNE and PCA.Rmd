@@ -1,0 +1,77 @@
+---
+title: "Week 14 IP- tSNE and PCA"
+author: "Billiah"
+date: '2022-04-01'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Libraries}
+library(tidyverse)
+library(devtools)
+library(factoextra)
+library(Rtsne)
+```
+
+```{r Loading and previewing data}
+data <- read.csv("http://bit.ly/CarreFourDataset")
+head(data)
+```
+
+```{r Checking for null values}
+sum(is.na(data))
+```
+There are no null values.
+
+
+```{r PCA}
+# Selecting the numerical columns
+n_data <- data[c(6:8,12,14:16)]
+
+data_pc<-prcomp(n_data, center = TRUE, scale. = TRUE)
+
+summary(data_pc)
+```
+The standard deviation represents the eigenvalues.
+
+Proportion of variancerepresents the amount of variance the component accounts for in the data. In this case, PC1 accounts for >70% of total variance in the data.
+
+The cumulative proportion represents the accumulated amount of explained variance.If we use the first 3components would be able to account for >98% of total variance.
+
+
+```{r Plotting }
+fviz_eig(data_pc)
+```
+The first 4 components have an elgenvalue of greater than 1 and cumulatively explain a variance > 98%.
+
+
+```{r Plotting PCA Using 2 components}
+plot(data_pc$x[,1], data_pc$x[,2], xlab="PC1 (70%)", ylab = "PC2 (14%)", main = "PC1 / PC2 - plot")
+```
+The first 2 components can cumulatively explain 84% variance in data.
+
+```{r Using t-SNE for Visualization}
+tSNE_data <- data$Y %>% 
+  as.data.frame()
+
+```
+
+```{r}
+## for plotting
+colors = rainbow(length(unique(data$Branch)))
+names(colors) = unique(data$Branch)
+
+## Executing the algorithm on curated data
+tsne <- Rtsne(n_data[,-2],  perplexity=30, verbose=TRUE, max_iter = 500)
+exeTimeTsne<- system.time(Rtsne(n_data[,-2], perplexity=30, verbose=TRUE, max_iter = 500))
+
+## Plotting
+plot(tsne$Y, t='n', main="tsne")
+text(tsne$Y, labels=data$Branch, col=colors[data$Branch])
+```
+There is some structure and patterns to the data.

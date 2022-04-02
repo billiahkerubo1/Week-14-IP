@@ -1,0 +1,49 @@
+---
+title: "Week 14 IP- Association Rules"
+author: "Billiah"
+date: '2022-04-02'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Libraries}
+# Loading package
+library(arules)
+library(arulesViz)
+```
+```{r Loading and previewing data}
+df = read.transactions("http://bit.ly/SupermarketDatasetII")
+head(df)
+```
+```{r Structure}
+str(df)
+```
+```{r Apriori algorithm}
+set.seed = 123 # Setting seed
+a_rules = apriori(data = df, 
+                        parameter = list(support = 0.005, 
+                                         confidence = 0.5))
+  
+```
+
+
+```{r}
+itemFrequencyPlot(df, topN = 10)
+  
+# Visualisation
+inspect(sort(a_rules, by = 'lift')[1:10])
+plot(a_rules, method = "graph", 
+     measure = "confidence", shading = "lift")
+```
+Tea is the best selling item, followed by wheat, mineral, fat and yoghurt, in that order.
+
+1% of customers bought sauce and cream.
+
+Confidence is that 79% of customers bought sauce and cream.
+
+There is increased expectation that if someone buys sauce, they are likely to buy cream.If they buy pepper& ground, they are also likely to buy herb.

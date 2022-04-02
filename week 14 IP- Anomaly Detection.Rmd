@@ -1,0 +1,152 @@
+---
+title: "Week 14 IP- Anomaly Detection"
+author: "Billiah"
+date: '2022-04-01'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Libraries}
+library(anomalize)
+library(tidyverse)
+library(dplyr)
+library(tibble)
+library(tsibble)
+library(magrittr)
+```
+
+```{r Loading and previewing data}
+# Loading the data
+data <- read.csv("http://bit.ly/CarreFourSalesDataset")
+head(data)
+
+```
+
+```{r Checking the size of the data}
+dim(data)
+```
+The data has 1000 rows and 2 columns.
+
+```{r}
+str(data)
+```
+```{r Changing the date column to date datatype from Character}
+Date = as.Date(data$Date)
+```
+
+
+
+
+
+```{r Dataframe to tibble}
+# Convert df to a tibble
+data_1 <- as_tibble(data)
+class(data_1)
+```
+
+```{r}
+# Converting a data.frame to a `tbl_time`
+data_1$Date <- as.Date(data_1$Date, format = "%m/%d/%y")
+
+#Convertion to POCIXct type
+data_1$Date <- as.POSIXct(data_1$Date)
+
+```
+
+
+```{r Anomalize}
+anomalized <- data_1 %>%
+ time_decompose(Sales, merge = TRUE) %>%
+    anomalize(remainder) %>%
+    time_recompose()
+anomalized %>% glimpse()
+```
+observed represents the observed values 
+
+season is the seasonal or cyclic trend. The default for daily data is a weekly seasonality.
+
+Remainder: This is what we want to analyze for outliers. It is simply the observed minus both the season and trend.
+
+Setting merge = TRUE keeps the original data with the newly created columns.
+
+
+```{r}
+anomalized %>%
+plot_anomalies(ncol = 3, alpha_dots = 0.25)
+```
+Majority of the observed are not anomalies.
+
+```{r Parameter Adjustment}
+anomalized %>%
+  time_decompose(Sales, frequency = "auto", trend = "2 weeks")%>%
+  anomalize(remainder)%>%
+  plot_anomaly_decomposition()+
+  ggtitle("Trend = 2 Weeks / Frequency = auto ")
+
+
+```
+There are little to no anomalies. Adjusting the parameters further will give more clarity.
+
+```{r Tuning parameters for anomaly}
+data_1%>%
+  time_decompose(Sales)%>%
+  anomalize(remainder, alpha = 0.05)%>%
+  time_recompose()%>%
+  plot_anomalies(time_recompose = T)+
+  ggtitle("alpha = 0.05")
+```
+
+```{r Apha = 0.025}
+data_1%>%
+  time_decompose(Sales)%>%
+  anomalize(remainder, alpha = 0.025)%>%
+  time_recompose()%>%
+  plot_anomalies(time_recompose = T)+
+  ggtitle("alpha = 0.025")
+
+```
+
+```{r Observing more anomalies}
+data_1%>%
+  time_decompose(Sales)%>%
+  anomalize(remainder, alpha = 0.2, max_anoms = 0.2)%>%
+  time_recompose()%>%
+  plot_anomalies(time_recompose = T)+
+  ggtitle("Anomaly limit = 20%")
+
+```
+The anomalies can be clearly observed now.
+
+```{r Reducing the limit of anomalies}
+data_1%>%
+  time_decompose(Sales)%>%
+  anomalize(remainder, alpha = 0.2, max_anoms = 0.05)%>%
+  time_recompose()%>%
+  plot_anomalies(time_recompose = T)+
+  ggtitle("Anomaly limit = 5%")
+
+```
+
+From the above observations, sales extremely increased in January, February all the way to
+
+April, with very minimal decreases between February and March.
+
+
+This may be an indication of the success of the measures put in place.
+
+This indicates that the marketing campaigns have been effective, the customers have been 
+
+retained and probably increased. Also, it may be as a result of increased app performance, 
+and also implies improved product quality.
+
+
+RECOMMENDATION
+
+The measures put in place to increase sales should be practised more and also improve on 
+
+the current measures.
